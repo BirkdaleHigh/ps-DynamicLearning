@@ -99,7 +99,8 @@ Param(
             [switch]$correctYear = $False
             $DLGroup | foreach {
                 $intake = [int]$_.'4 - User name'.Substring(0,2)
-                $yeargroup = @('Year 7','Year 8','Year 9','Year 10','Year 11')[(get-date).year - ($intake + 2000) -1]
+                # TODO: handle calculating the intake year, this method below might need -1 appending depending on the current year.
+                $yeargroup = @('Year 7','Year 8','Year 9','Year 10','Year 11')[(get-date).year - ($intake + 2000)]
                 $_.psobject.properties | foreach{
                     if($_.Name -Like "$yeargroup |*"){
                         $_.Value = 'Yes'
