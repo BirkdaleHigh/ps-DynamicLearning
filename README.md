@@ -1,6 +1,19 @@
 # Dynamic Learning User Data
 This is a set of commands to make the headache of managing Dynamic Learning user accounts easier with regards to class memberships and student details
 
+As an example;
+
+```Powershell
+get-adgroup -SearchBase 'OU=Class Groups,OU=...,DC=EXAMPLE' -Filter * |
+    where name -match 'cs' |
+    where name -NotLike '11*' |
+    sort |
+    select name |
+    Update-DLUser -CSV 'N:\Dynamic Learning Downloaded Users.csv' |
+    convertto-csv -NoTypeInformation |
+    out-file 'N:\DLWithGroupsSetToUpload.csv'
+```
+
 ## Add-DLGroup
 * Adds an empty group header to the csv
 or
