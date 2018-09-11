@@ -17,6 +17,10 @@
     InputObject SideIndicator
     ----------- -------------
     00SurnameI   <=
+.EXAMPLE
+    get-adgroup -SearchBase 'OU=Class Groups,...' -Filter * | where name -match 'cs' | where name -NotLike '11*' | sort | select name |Update-DLUser -CSV 'N:\Dynamic Learning-Users-2018-9-11-15756738.csv' | convertto-csv -NoTypeInformation | out-file n:\DLWithGroups.csv
+
+    Do all computer science groups, but not year 11.
 #>
 [CmdletBinding()]
 Param(
@@ -41,24 +45,33 @@ Param(
     }
     Process{
         forEach($group in $class){
-            $adgroup = $group | Get-ADGroupMember | select -ExpandProperty samaccountname
+            Write-Verbose "Start to set members for group: $group"
+            $adgroup = $group | Get-ADGroupMember | Select-Object -ExpandProperty samaccountname
 
-            $DLGroup = $c | where '4 - User name' -in $adgroup
+            $DLGroup = $c | Where-Object '4 - User name' -in $adgroup
 
             # Check
-            $a = ($adgroup | measure).Count
-            $b = ($DLGroup | measure).Count
+            $a = ($adgroup | Measure-Object).Count
+            $b = ($DLGroup | Measure-Object).Count
             if($a -ne $b){
                 Write-Output "<= In ADGroup, => in DLGroup. Missing for: $group"
                 Compare-object $adgroup $DLGroup.'4 - User name'
+            } else {
+                Write-Verbose "Group has $a members in both AD and DL"
             }
 
-            # Mark the use record as eddited for re-upload
-            $DLGroup | %{$_.'1 - Action' = 'E'}
+            # Mark the use record as edited for re-upload
+            $DLGroup | Foreach-Object {
+                if($_.'1 - Action' -ne 'A' ){
+                    $_.'1 - Action' = 'E'
+                } else {
+                    Write-Verbose "Not changing Add action to Edit."
+                }
+            }
 
             # Clear all group memberships
-            $DLGroup | foreach{
-                $_.psobject.properties | foreach{
+            $DLGroup | Foreach-Object {
+                $_.psobject.properties | Foreach-Object {
                     if($_.value -eq 'Yes'){
                         $_.Value = 'No'
                     }
@@ -67,8 +80,11 @@ Param(
 
             # Add to correct group
             [switch]$added = $False
-            $DLGroup | foreach{
-                $_.psobject.properties | foreach{
+            $DLGroup | Foreach-Object {
+                $_.psobject.properties | Foreach-Object {
+                    Write-Verbose "`tCheck property: $($_.Name)"
+                    Write-Verbose "`tIs like Value: $group"
+                    Write-Verbose "`t`tResults in value: $($_.Name -Like "*$group*")"
                     if($_.Name -Like "*$group*"){
                         $_.Value = 'Yes'
                         $added = $True
