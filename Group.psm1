@@ -16,11 +16,16 @@
 
     InputObject SideIndicator
     ----------- -------------
-    00SurnameI   <=
+    00SurnameI  <=
 .EXAMPLE
     get-adgroup -SearchBase 'OU=Class Groups,...' -Filter * | where name -match 'cs' | where name -NotLike '11*' | sort | select name |Update-DLUser -CSV 'N:\Dynamic Learning-Users-2018-9-11-15756738.csv' | convertto-csv -NoTypeInformation | out-file n:\DLWithGroups.csv
 
     Do all computer science groups, but not year 11.
+.EXAMPLE
+    Update-DLUser -Class 7M6_Cs -CSV 'N:\Dynamic Learning-Users.csv' | convertto-csv -NoTypeInformation | out-file n:\DLWithGroups.csv
+
+    Just update the records for the members of 7m6_Cs.
+    Exisitng members won't be removed because they are not found by the class selection.
 #>
 [CmdletBinding()]
 Param(
