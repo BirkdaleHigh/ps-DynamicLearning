@@ -69,46 +69,39 @@ Param(
                 }
             }
 
-            # Clear all group memberships
-            $DLGroup | Foreach-Object {
-                $_.psobject.properties | Foreach-Object {
-                    if($_.value -eq 'Yes'){
-                        $_.Value = 'No'
-                    }
-                }
-            }
-
             # Add to correct group
-            [switch]$added = $False
+            [switch]$script:added = $False
             $DLGroup | Foreach-Object {
                 $_.psobject.properties | Foreach-Object {
-                    Write-Verbose "`tCheck property: $($_.Name)"
-                    Write-Verbose "`tIs like Value: $group"
-                    Write-Verbose "`t`tResults in value: $($_.Name -Like "*$group*")"
                     if($_.Name -Like "*$group*"){
+                        Write-Verbose "`tFound property: $($_.Name)"
+                        Write-Verbose "`tIs like Value: $group"
+                        Write-Verbose "`t`tResults in value: $($_.Name -Like "*$group*")"
                         $_.Value = 'Yes'
-                        $added = $True
+                        $script:added = $True
+                    } elseif ($_.name -Like "* | *") {
+                        $_.Value = "No"
                     }
                 }
             }
-            if(-not $added){
+            if(-not $script:added){
                 Write-Warning "$group DL Group not found to add membership"
             }
 
             # Add to correct Year Group
-            [switch]$correctYear = $False
-            $DLGroup | foreach {
+            [switch]$script:correctYear = $False
+            $DLGroup | Foreach-Object {
                 $intake = [int]$_.'4 - User name'.Substring(0,2)
                 # TODO: handle calculating the intake year, this method below might need -1 appending depending on the current year.
                 $yeargroup = @('Year 7','Year 8','Year 9','Year 10','Year 11')[(get-date).year - ($intake + 2000)]
-                $_.psobject.properties | foreach{
+                $_.psobject.properties | Foreach-Object {
                     if($_.Name -Like "$yeargroup |*"){
                         $_.Value = 'Yes'
-                        $correctYear = $True
+                        $script:correctYear = $True
                     }
                 }
             }
-            if($correctYear -and -not $added){
+            if($script:correctYear -and -not $added){
                 Write-Warning "$group DL Group not found to add membership"
             }
 
