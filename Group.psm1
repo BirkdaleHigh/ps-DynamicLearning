@@ -338,3 +338,119 @@ function Get-MissingUser {
         Compare-Object $DL $AD -PassThru -Property SamAccountName | Where-Object SideIndicator -eq '=>'
     }
 }
+
+class DLUser {
+    [string]${1 - Action}
+    [string]${2 - User ID - do not edit (DL use only)}
+    [string]${3 - User Type}
+    [string]${4 - User Name}
+    [string]${5 - Password}
+    [string]${6 - Title}
+    [string]${7 - First name}
+    [string]${8 - Middle name}
+    [string]${9 - Last name}
+    [string]${10 - DOB}
+    [string]${11 - Sex}
+    [string]${12 - UPN}
+    [string]${13 - email}
+
+
+    # Parameterless Constructor
+    DLUser ()
+    {
+        $this.'1 - Action' = 'A' # A for Add. E for Edit, D for Delete
+        $this.'3 - User Type' = 'S' # S or TA for Student or Teacher
+        $this.'5 - Password' = 'pass' + (Get-Random -Minimum 1000 -Maximum 9999)
+        $this.'10 - DOB' = '01/01/1970'
+    }
+
+    # CSV Imported Object Parameters
+    DLUser([PSCustomObject]$PipedObject){
+        $this.'1 - Action' = $PipedObject.'1 - Action'
+        $this.'2 - User ID - do not edit (DL use only)' = $PipedObject.'2 - User ID - do not edit (DL use only)'
+        $this.'3 - User Type' = $PipedObject.'3 - User Type'
+        $this.'4 - User Name' = $PipedObject.'4 - User Name'
+        $this.'5 - Password' = $PipedObject.'5 - Password'
+        $this.'6 - Title' = $PipedObject.'6 - Title'
+        $this.'7 - First name' = $PipedObject.'7 - First name'
+        $this.'8 - Middle name' = $PipedObject.'8 - Middle name'
+        $this.'9 - Last name' = $PipedObject.'9 - Last name'
+        $this.'10 - DOB' = $PipedObject.'10 - DOB'
+        $this.'11 - Sex' = $PipedObject.'11 - Sex'
+        $this.'12 - UPN' = $PipedObject.'12 - UPN'
+        $this.'13 - email' = $PipedObject.'13 - email'
+    }
+
+    # Full parameter set instance
+    DLUser(
+        [string]${1 - Action},
+        [string]${2 - User ID - do not edit (DL use only)},
+        [string]${3 - User Type},
+        [string]${4 - User Name},
+        [string]${5 - Password},
+        [string]${6 - Title},
+        [string]${7 - First name},
+        [string]${8 - Middle name},
+        [string]${9 - Last name},
+        [string]${10 - DOB},
+        [string]${11 - Sex},
+        [string]${12 - UPN},
+        [string]${13 - email}
+    ){
+        $this.'1 - Action' = ${1 - Action} # A for Add. E for Edit, D for Delete
+        $this.'2 - User ID - do not edit (DL use only)' = ${2 - User ID - do not edit (DL use only)}
+        $this.'3 - User Type' = ${3 - User Type}
+        $this.'4 - User Name' = ${4 - User Name}
+        $this.'5 - Password' = ${5 - Password}
+        $this.'6 - Title' = ${6 - Title}
+        $this.'7 - First name' = ${7 - First name}
+        $this.'8 - Middle name' = ${8 - Middle name}
+        $this.'9 - Last name' = ${9 - Last name}
+        $this.'10 - DOB' = ${10 - DOB}
+        $this.'11 - Sex' = ${11 - Sex}
+        $this.'12 - UPN' = ${12 - UPN}
+        $this.'13 - email' = ${13 - email}
+    }
+
+    [Void] Delete(){
+        $this.'1 - Action' = 'D'
+    }
+}
+
+function Import-User {
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        $User
+        )
+
+        begin {
+        }
+
+        process {
+            if($PSBoundParameters.User){
+                [DLUser]::new($User)
+            } else{
+                Write-Warning "No input"
+            }
+        }
+
+        end {
+        }
+    }
+
+function Export-User {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [DLUser[]]$User
+
+        ,[Parameter(Mandatory)]
+        [String]
+        $Path
+    )
+    Process{
+        $User | convertto-csv -NoTypeInformation | Out-File -Append $Path
+    }
+}

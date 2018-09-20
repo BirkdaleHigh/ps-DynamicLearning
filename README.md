@@ -37,3 +37,8 @@ Clear the users groups and re-assign "Yes" to their class and year group.
 * Finalize `New-DLUser` from reference.ps1 to be called in `update-DLUser` for adding new AD users to Dynamic learning to then have proper group assignment
 * `New-DLUser` needs to expose account password for distribution to students.
 * `Format-DLForHumans` should accept the same object about to be piped to `Export-DLUsers`
+
+# Class
+* DLuser class currently does not support group memberships
+
+Class is planned to be used by import-DLUser to create object from a data source that can be used by export-dluser which creates a CSV.
