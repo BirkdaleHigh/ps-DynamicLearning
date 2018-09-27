@@ -353,7 +353,7 @@ class DLUser {
     [string]$Sex
     [string]$UPN
     [string]$email
-    [System.Collections.ArrayList]$memberOf
+    [System.Collections.Generic.List[String]]$memberOf = [System.Collections.Generic.List[String]]::new()
 
 
     # Parameterless Constructor
@@ -381,14 +381,11 @@ class DLUser {
         $this.UPN        = $PipedObject.'12 - UPN'
         $this.email      = $PipedObject.'13 - email'
 
-        Foreach($prop in $PipedObject.psObject.Get_Properties()){
+        Foreach($prop in $PipedObject.psObject.Properties){
             if(($prop.value -eq "Yes") -and ($prop.name -like "* | *")){
                 $this.memberOf.add($prop.name)
             }
         }
-    # You cannot call a method on a null-valued expression.
-    # At N:\Documents\src\ps-dynamicLearning\Group.psm1:386 char:17
-    # +                 $this.memberOf.add($prop.name)
 
     }
 
