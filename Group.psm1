@@ -353,6 +353,7 @@ class DLUser {
     [string]$Sex
     [string]$UPN
     [string]$email
+    [System.Collections.ArrayList]$memberOf
 
 
     # Parameterless Constructor
@@ -379,6 +380,16 @@ class DLUser {
         $this.Sex        = $PipedObject.'11 - Sex'
         $this.UPN        = $PipedObject.'12 - UPN'
         $this.email      = $PipedObject.'13 - email'
+
+        Foreach($prop in $PipedObject.psObject.Get_Properties()){
+            if(($prop.value -eq "Yes") -and ($prop.name -like "* | *")){
+                $this.memberOf.add($prop.name)
+            }
+        }
+    # You cannot call a method on a null-valued expression.
+    # At N:\Documents\src\ps-dynamicLearning\Group.psm1:386 char:17
+    # +                 $this.memberOf.add($prop.name)
+
     }
 
     [Void] Delete(){
