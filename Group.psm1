@@ -340,80 +340,67 @@ function Get-MissingUser {
 }
 
 class DLUser {
-    [string]${1 - Action}
-    [string]${2 - User ID - do not edit (DL use only)}
-    [string]${3 - User Type}
-    [string]${4 - User Name}
-    [string]${5 - Password}
-    [string]${6 - Title}
-    [string]${7 - First name}
-    [string]${8 - Middle name}
-    [string]${9 - Last name}
-    [string]${10 - DOB}
-    [string]${11 - Sex}
-    [string]${12 - UPN}
-    [string]${13 - email}
+    [string]$Action
+    [string]$ID
+    [string]$Type
+    [string]$UserName
+    [string]$Password
+    [string]$Title
+    [string]$Firstname
+    [string]$Middlename
+    [string]$Lastname
+    [string]$DOB
+    [string]$Sex
+    [string]$UPN
+    [string]$email
 
 
     # Parameterless Constructor
     DLUser ()
     {
-        $this.'1 - Action' = 'A' # A for Add. E for Edit, D for Delete
-        $this.'3 - User Type' = 'S' # S or TA for Student or Teacher
-        $this.'5 - Password' = 'pass' + (Get-Random -Minimum 1000 -Maximum 9999)
-        $this.'10 - DOB' = '01/01/1970'
+        $this.action= 'A' # A for Add. E for Edit, D for Delete
+        $this.type = 'S' # S or TA for Student or Teacher
+        $this.password = 'pass' + (Get-Random -Minimum 1000 -Maximum 9999)
+        $this.dob = '01/01/1970'
     }
 
     # CSV Imported Object Parameters
     DLUser([PSCustomObject]$PipedObject){
-        $this.'1 - Action' = $PipedObject.'1 - Action'
-        $this.'2 - User ID - do not edit (DL use only)' = $PipedObject.'2 - User ID - do not edit (DL use only)'
-        $this.'3 - User Type' = $PipedObject.'3 - User Type'
-        $this.'4 - User Name' = $PipedObject.'4 - User Name'
-        $this.'5 - Password' = $PipedObject.'5 - Password'
-        $this.'6 - Title' = $PipedObject.'6 - Title'
-        $this.'7 - First name' = $PipedObject.'7 - First name'
-        $this.'8 - Middle name' = $PipedObject.'8 - Middle name'
-        $this.'9 - Last name' = $PipedObject.'9 - Last name'
-        $this.'10 - DOB' = $PipedObject.'10 - DOB'
-        $this.'11 - Sex' = $PipedObject.'11 - Sex'
-        $this.'12 - UPN' = $PipedObject.'12 - UPN'
-        $this.'13 - email' = $PipedObject.'13 - email'
-    }
-
-    # Full parameter set instance
-    DLUser(
-        [string]${1 - Action},
-        [string]${2 - User ID - do not edit (DL use only)},
-        [string]${3 - User Type},
-        [string]${4 - User Name},
-        [string]${5 - Password},
-        [string]${6 - Title},
-        [string]${7 - First name},
-        [string]${8 - Middle name},
-        [string]${9 - Last name},
-        [string]${10 - DOB},
-        [string]${11 - Sex},
-        [string]${12 - UPN},
-        [string]${13 - email}
-    ){
-        $this.'1 - Action' = ${1 - Action} # A for Add. E for Edit, D for Delete
-        $this.'2 - User ID - do not edit (DL use only)' = ${2 - User ID - do not edit (DL use only)}
-        $this.'3 - User Type' = ${3 - User Type}
-        $this.'4 - User Name' = ${4 - User Name}
-        $this.'5 - Password' = ${5 - Password}
-        $this.'6 - Title' = ${6 - Title}
-        $this.'7 - First name' = ${7 - First name}
-        $this.'8 - Middle name' = ${8 - Middle name}
-        $this.'9 - Last name' = ${9 - Last name}
-        $this.'10 - DOB' = ${10 - DOB}
-        $this.'11 - Sex' = ${11 - Sex}
-        $this.'12 - UPN' = ${12 - UPN}
-        $this.'13 - email' = ${13 - email}
+        $this.Action     = $PipedObject.'1 - Action'
+        $this.ID         = $PipedObject.'2 - User ID - do not edit (DL use only)'
+        $this.Type       = $PipedObject.'3 - User Type'
+        $this.UserName   = $PipedObject.'4 - User Name'
+        $this.Password   = $PipedObject.'5 - Password'
+        $this.Title      = $PipedObject.'6 - Title'
+        $this.Firstname  = $PipedObject.'7 - First name'
+        $this.Middlename = $PipedObject.'8 - Middle name'
+        $this.Lastname   = $PipedObject.'9 - Last name'
+        $this.DOB        = $PipedObject.'10 - DOB'
+        $this.Sex        = $PipedObject.'11 - Sex'
+        $this.UPN        = $PipedObject.'12 - UPN'
+        $this.email      = $PipedObject.'13 - email'
     }
 
     [Void] Delete(){
-        $this.'1 - Action' = 'D'
+         $this.action = 'D'
+    }
+
+    [PSCustomObject] Export(){
+        return [PSCustomObject]@{
+            '1 - Action' = $this.Action
+            '2 - User ID - do not edit (DL use only)' = $this.ID
+            '3 - User Type' = $this.Type
+            '4 - User Name' = $this.UserName
+            '5 - Password' = $this.Password
+            '6 - Title' = $this.Title
+            '7 - First name' = $this.Firstname
+            '8 - Middle name' = $this.Middlename
+            '9 - Last name' = $this.Lastname
+            '10 - DOB' = $this.DOB
+            '11 - Sex' = $this.Sex
+            '12 - UPN' = $this.UPN
+            '13 - email' = $this.email
+        }
     }
 }
 
@@ -451,6 +438,6 @@ function Export-User {
         $Path
     )
     Process{
-        $User | convertto-csv -NoTypeInformation | Out-File -Append $Path
+        $User.export() | convertto-csv -NoTypeInformation | Out-File -Append $Path
     }
 }
