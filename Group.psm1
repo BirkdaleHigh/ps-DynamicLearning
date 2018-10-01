@@ -118,23 +118,6 @@ Param(
     }
 }
 
-function Format-ForHumans{
-    Param(
-        # CSV Datasource
-        [Parameter(Position=0)]
-        $CSV
-    )
-    Process{
-        import-csv $CSV |
-            select-Object @(
-                @{n='User Name';e={$_.'4 - User Name'}}
-                @{n='Password'; e={$_.'5 - Password'}}
-                @{n='Name';     e={$_.'7 - First name'}}
-                @{n='Surname';  e={$_.'9 - Last Name'}}
-            )
-    }
-}
-
 function Add-Group{
     <#
     .SYNOPSIS
@@ -352,8 +335,9 @@ class DLUser {
     [string]$DOB
     [string]$Sex
     [string]$UPN
-    [string]$email
-    [System.Collections.Generic.List[String]]$memberOf = [System.Collections.Generic.List[String]]::new()
+    [string]$Email
+    [System.Collections.Generic.List[String]]$MemberOf = [System.Collections.Generic.List[String]]::new()
+    static [System.Collections.Generic.List[String]]$Groups = [System.Collections.Generic.List[String]]::new()
 
 
     # Parameterless Constructor
@@ -382,19 +366,26 @@ class DLUser {
         $this.email      = $PipedObject.'13 - email'
 
         Foreach($prop in $PipedObject.psObject.Properties){
-            if(($prop.value -eq "Yes") -and ($prop.name -like "* | *")){
-                $this.memberOf.add($prop.name)
+            if($prop.name -like '* | *'){
+                if(($prop.value -eq "Yes")){
+                    $this.memberOf.add($prop.name)
+                }
+                if(-not ([DLUser]::groups -contains $prop.name)){
+                    [DLUser]::groups.add($prop.name)
+                }
             }
         }
 
     }
 
-    [Void] Delete(){
+    [DLUser] Delete(){
          $this.action = 'D'
+
+         return $this
     }
 
     [PSCustomObject] Export(){
-        return [PSCustomObject]@{
+        $base = [PSCustomObject]@{
             '1 - Action' = $this.Action
             '2 - User ID - do not edit (DL use only)' = $this.ID
             '3 - User Type' = $this.Type
@@ -409,6 +400,15 @@ class DLUser {
             '12 - UPN' = $this.UPN
             '13 - email' = $this.email
         }
+
+        Foreach($name in [DLUser]::groups){
+            Add-member -inputObject $base -NotePropertyName $name -NotePropertyValue "No"
+        }
+        Foreach($membership in $this.memberof){
+            $base.$membership = "Yes"
+        }
+
+        return $base
     }
 }
 
@@ -418,34 +418,29 @@ function Import-User {
         [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
         $User
-        )
-
-        begin {
-        }
-
-        process {
-            if($PSBoundParameters.User){
-                [DLUser]::new($User)
-            } else{
-                Write-Warning "No input"
-            }
-        }
-
-        end {
+    )
+    process {
+        if($PSBoundParameters.User){
+            [DLUser]::new($User)
+        } else{
+            Write-Warning "No input"
         }
     }
+}
 
 function Export-User {
+    <#
+    .SYNOPSIS
+        Transform a user object into properties required for the Dynamic learning CSV
+    .DESCRIPTION
+        Append a property for every group imported in order to create a full CSV of groups from convertTo-CSV
+    #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ValueFromPipeline)]
         [DLUser[]]$User
-
-        ,[Parameter(Mandatory)]
-        [String]
-        $Path
     )
     Process{
-        $User.export() | convertto-csv -NoTypeInformation | Out-File -Append $Path
+        $User.export()
     }
 }
