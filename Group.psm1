@@ -174,7 +174,7 @@ function Add-Group{
 function Get-Group{
     <#
     .SYNOPSIS
-        Get Dynamic Learning groups
+        Get Dynamic Learning groups from exported file
     .DESCRIPTION
         The Dynamic Learning User Export adds a column for each group on the system that the users then have yes/no filled in to assign membership
 
