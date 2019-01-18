@@ -333,6 +333,7 @@ class DLUser {
     [string]$Sex
     [string]$UPN
     [string]$Email
+    [boolean]$Enabled
     [System.Collections.Generic.List[String]]$MemberOf = [System.Collections.Generic.List[String]]::new()
     static [System.Collections.Generic.List[String]]$Groups = [System.Collections.Generic.List[String]]::new()
     hidden [string] SamAccountName() { return $this.username }
@@ -348,30 +349,65 @@ class DLUser {
     }
 
     # CSV Imported Object Parameters
-    DLUser([PSCustomObject]$PipedObject){
-        $this.Action     = $PipedObject.'1 - Action'
-        $this.ID         = $PipedObject.'2 - User ID - do not edit (DL use only)'
-        $this.Type       = $PipedObject.'3 - User Type'
-        $this.UserName   = $PipedObject.'4 - User Name'
-        $this.Password   = $PipedObject.'5 - Password'
-        $this.Title      = $PipedObject.'6 - Title'
-        $this.Firstname  = $PipedObject.'7 - First name'
-        $this.Middlename = $PipedObject.'8 - Middle name'
-        $this.Lastname   = $PipedObject.'9 - Last name'
-        $this.DOB        = $PipedObject.'10 - DOB'
-        $this.Sex        = $PipedObject.'11 - Sex'
-        $this.UPN        = $PipedObject.'12 - UPN'
-        $this.email      = $PipedObject.'13 - email'
+    DLUser([PSCustomObject]$PipedObject) {
+        # CSV Version 1 headers looks like this
+        if ( [bool]($PipedObject.PSobject.Properties.name -match '1 - Action')) {
+            $this.Action = $PipedObject.'1 - Action'
+            $this.ID = $PipedObject.'2 - User ID - do not edit (DL use only)'
+            $this.Type = $PipedObject.'3 - User Type'
+            $this.UserName = $PipedObject.'4 - User Name'
+            $this.Password = $PipedObject.'5 - Password'
+            $this.Title = $PipedObject.'6 - Title'
+            $this.Firstname = $PipedObject.'7 - First name'
+            $this.Middlename = $PipedObject.'8 - Middle name'
+            $this.Lastname = $PipedObject.'9 - Last name'
+            $this.DOB = $PipedObject.'10 - DOB'
+            $this.Sex = $PipedObject.'11 - Sex'
+            $this.UPN = $PipedObject.'12 - UPN'
+            $this.email = $PipedObject.'13 - email'
 
-        Foreach($prop in $PipedObject.psObject.Properties){
-            if($prop.name -like '* | *'){
-                if(($prop.value -eq "Yes")){
-                    $this.memberOf.add($prop.name)
-                }
-                if(-not ([DLUser]::groups -contains $prop.name)){
-                    [DLUser]::groups.add($prop.name)
+            Foreach ($prop in $PipedObject.psObject.Properties) {
+                if ($prop.name -like '* | *') {
+                    if (($prop.value -eq "Yes")) {
+                        $this.memberOf.add($prop.name)
+                    }
+                    if (-not ([DLUser]::groups -contains $prop.name)) {
+                        [DLUser]::groups.add($prop.name)
+                    }
                 }
             }
+            return
+        }
+
+        # CSV Version 2 Header looks like this
+        if ( [bool]($PipedObject.PSobject.Properties.name -match 'Action *')) {
+            $this.Action = $PipedObject.'Action *'
+            $this.ID = $PipedObject.'User ID'
+            $this.Type = $PipedObject.'Type *'
+            $this.UserName = $PipedObject.'Username/Email *'
+            $this.Password = $PipedObject.'Password'
+            $this.Firstname = $PipedObject.'First name *'
+            $this.Middlename = $PipedObject.'Middle name'
+            $this.Lastname = $PipedObject.'Last name *'
+            $this.Sex = $PipedObject.'Gender'
+            $this.UPN = $PipedObject.'UPN'
+            $this.Enabled = $PipedObject.'Access to application (Y/N) *'
+
+            # Version 2 from DL may or may not have groups.
+            if ( [bool]($PipedObject.PSobject.Properties.name -like 'Group: *')) {
+                Foreach ($prop in $PipedObject.psObject.Properties) {
+                    if ($prop.name.StartsWith('Group: ')) {
+                        $name = $prop.name.replace('Group: ', '')
+                        if (($prop.value -eq "Y")) {
+                            $this.memberOf.add($name)
+                        }
+                        if (-not ([DLUser]::groups -contains $name)) {
+                            [DLUser]::groups.add($name)
+                        }
+                    }
+                }
+            }
+            return
         }
 
     }
@@ -382,31 +418,67 @@ class DLUser {
          return $this
     }
 
-    [PSCustomObject] Export(){
-        $base = [PSCustomObject]@{
-            '1 - Action' = $this.Action
-            '2 - User ID - do not edit (DL use only)' = $this.ID
-            '3 - User Type' = $this.Type
-            '4 - User Name' = $this.UserName
-            '5 - Password' = $this.Password
-            '6 - Title' = $this.Title
-            '7 - First name' = $this.Firstname
-            '8 - Middle name' = $this.Middlename
-            '9 - Last name' = $this.Lastname
-            '10 - DOB' = $this.DOB
-            '11 - Sex' = $this.Sex
-            '12 - UPN' = $this.UPN
-            '13 - email' = $this.email
+    [PSCustomObject] Export() {return $this.Export(2)}
+    [PSCustomObject] Export([string]$Version) {
+        switch ($Version) {
+            "1" {
+                $base = [PSCustomObject]@{
+                    '1 - Action'                              = $this.Action
+                    '2 - User ID - do not edit (DL use only)' = $this.ID
+                    '3 - User Type'                           = $this.Type
+                    '4 - User Name'                           = $this.UserName
+                    '5 - Password'                            = $this.Password
+                    '6 - Title'                               = $this.Title
+                    '7 - First name'                          = $this.Firstname
+                    '8 - Middle name'                         = $this.Middlename
+                    '9 - Last name'                           = $this.Lastname
+                    '10 - DOB'                                = $this.DOB
+                    '11 - Sex'                                = $this.Sex
+                    '12 - UPN'                                = $this.UPN
+                    '13 - email'                              = $this.email
+                }
+                # TODO: Group name needs to be restored as "<DL Creator name> | <group name>". A hidden DL_group_map list needs to hold what group name was created by which user to prefix
+                Foreach ($name in [DLUser]::groups) {
+                    Add-member -inputObject $base -NotePropertyName $name -NotePropertyValue "No"
+                }
+                Foreach ($membership in $this.memberof) {
+                    $base.$membership = "Yes"
+                }
+                return $base
+            }
+            "2" {
+                $base = [PSCustomObject]@{
+                    'Action *'         = $this.Action
+                    'User ID'          = $this.ID
+                    'Type *'           = $this.Type
+                    'Username/Email *' = $this.UserName
+                    'Password'         = $this.Password
+                    'First name *'     = $this.Firstname
+                    'Middle name'      = $this.Middlename
+                    'Last name *'      = $this.Lastname
+                    'Gender'           = $this.Sex
+                    'UPN'              = $this.UPN
+                }
+                if ($this.Enabled) {
+                    $access = "Y"
+                }
+                else {
+                    $access = "N"
+                }
+                $base | Add-member -NotePropertyName 'Access to application (Y/N) *' -NotePropertyValue $access
+                Foreach ($name in [DLUser]::groups) {
+                    $base | Add-member -NotePropertyName $name -NotePropertyValue $Null
+                }
+                Foreach ($membership in $this.memberof) {
+                    $base.$membership = "Y"
+                }
+                return $base
+            }
+            Default {
+                Throw "You did not specify a valid version to export"
+            }
         }
-
-        Foreach($name in [DLUser]::groups){
-            Add-member -inputObject $base -NotePropertyName $name -NotePropertyValue "No"
-        }
-        Foreach($membership in $this.memberof){
-            $base.$membership = "Yes"
-        }
-
-        return $base
+        return [pscustomobject]
     }
 
     [DLUser] AddGroup([string]$name){
