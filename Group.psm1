@@ -79,9 +79,6 @@ Param(
             $DLGroup | Foreach-Object {
                 $_.psobject.properties | Foreach-Object {
                     if($_.Name -Like "*$group*"){
-                        Write-Verbose "`tFound property: $($_.Name)"
-                        Write-Verbose "`tIs like Value: $group"
-                        Write-Verbose "`t`tResults in value: $($_.Name -Like "*$group*")"
                         $_.Value = 'Yes'
                         $script:added = $True
                     } elseif ($_.name -Like "* | *") {
