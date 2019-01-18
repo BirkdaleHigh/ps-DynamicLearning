@@ -371,8 +371,8 @@ class DLUser {
                     if (($prop.value -eq "Yes")) {
                         $this.memberOf.add($prop.name)
                     }
-                    if (-not ([DLUser]::groups -contains $prop.name)) {
-                        [DLUser]::groups.add($prop.name)
+                    if (-not ($this::groups -contains $prop.name)) {
+                        $this::groups.add($prop.name)
                     }
                 }
             }
@@ -401,8 +401,8 @@ class DLUser {
                         if (($prop.value -eq "Y")) {
                             $this.memberOf.add($name)
                         }
-                        if (-not ([DLUser]::groups -contains $name)) {
-                            [DLUser]::groups.add($name)
+                        if (-not ($this::groups -contains $name)) {
+                            $this::groups.add($name)
                         }
                     }
                 }
@@ -438,7 +438,7 @@ class DLUser {
                     '13 - email'                              = $this.email
                 }
                 # TODO: Group name needs to be restored as "<DL Creator name> | <group name>". A hidden DL_group_map list needs to hold what group name was created by which user to prefix
-                Foreach ($name in [DLUser]::groups) {
+                Foreach ($name in $this::groups) {
                     Add-member -inputObject $base -NotePropertyName $name -NotePropertyValue "No"
                 }
                 Foreach ($membership in $this.memberof) {
@@ -466,7 +466,7 @@ class DLUser {
                     $access = "N"
                 }
                 $base | Add-member -NotePropertyName 'Access to application (Y/N) *' -NotePropertyValue $access
-                Foreach ($name in [DLUser]::groups) {
+                Foreach ($name in $this::groups) {
                     $base | Add-member -NotePropertyName $name -NotePropertyValue $Null
                 }
                 Foreach ($membership in $this.memberof) {
