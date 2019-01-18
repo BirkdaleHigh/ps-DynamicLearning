@@ -335,6 +335,7 @@ class DLUser {
     [string]$Email
     [System.Collections.Generic.List[String]]$MemberOf = [System.Collections.Generic.List[String]]::new()
     static [System.Collections.Generic.List[String]]$Groups = [System.Collections.Generic.List[String]]::new()
+    hidden [string] SamAccountName() { return $this.username }
 
 
     # Parameterless Constructor
@@ -407,9 +408,58 @@ class DLUser {
 
         return $base
     }
+
+    [DLUser] AddGroup([string]$name){
+        $valid_group = $this::Groups.where({ $_.split('|')[0].trim() -eq $name })
+        if(-not $valid_group) {
+            Throw "Group $name is not found out of $($this::Groups.count) in ::Groups list"
+        }
+        # TODO: test if name containes | and switch search cases instead of throwing
+        if($valid_group.count -gt 1) {
+            Throw "Multiple matches for group($name) as: $valid_group"
+        }
+
+        if($this.MemberOf -notcontains $valid_group){
+            # If this list actually needs modifing then set the edit attribute.
+            $this.action = 'E'
+            $this.MemberOf.Add($valid_group)
+        }
+
+        return $this
+    }
+
+    [DLUser] RemoveGroup([string]$name){
+        $valid_group = $this::Groups.where({ $_.split('|')[0].trim() -eq $name })
+        if(-not $valid_group) {
+            Throw "Group $name is not found out of $($this::Groups.count) in ::Groups list"
+        }
+        # TODO: test if name containes | and switch search cases instead of throwing
+        if($valid_group.count -gt 1) {
+            Throw "Multiple matches for group($name) as: $valid_group"
+        }
+
+        if($this.MemberOf -contains $valid_group){
+            # If this list actually needs modifing then set the edit attribute.
+            $this.action = 'E'
+            $this.MemberOf.Remove($valid_group)
+        }
+
+        return $this
+    }
 }
 
 function Import-User {
+    <#
+    .SYNOPSIS
+        Convert CSV data into a useful object in to inspect and modify
+    .DESCRIPTION
+        Imports users from the csv into a custom class whose objects have a nicely formatted memberOf attribute for
+        group memberships. To view all groups from the csv read the ::Groups static property.
+    .EXAMPLE
+        $AllDLUsers = import-csv 'N:\Downloads\Dynamic Learning-Users-2019-1-7-15713797.csv' | Import-DLUser
+
+        Every user from in the CSV exported from dynamic learning has been made into a DLUser type object.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(ValueFromPipeline,ValueFromPipelineByPropertyName)]
@@ -439,5 +489,60 @@ function Export-User {
     )
     Process{
         $User.export()
+    }
+}
+
+function Set-GroupMember {
+    <#
+    .SYNOPSIS
+        From an ADgroup apply the class membership field for the DL User.
+    .DESCRIPTION
+        Acting upon an array of DL User types, for a given ad group check the membership then update the membership record to Yes.
+    #>
+    [CmdletBinding()]
+    param (
+        #Imported user list to set memberships on
+        [Parameter(Mandatory)]
+        [DLUser[]]$User,
+
+        # AD group to search for members in
+        [Parameter(Mandatory)]
+        [string[]]$group
+    )
+    Process{
+        foreach ($g in $group) {
+            $users_in_AD = get-adgroupmember $g | Add-Member -PassThru -MemberType AliasProperty -Name Username -Value SamAccountName -force
+
+            $users_in_DL = $User | where-object {
+                # Where the user lists a DL group starting with the name of the AD Group, removing whitespace.
+                # DL Groups are <Group Name> | <Group Creator> for some reason in the csv.
+                $psitem.MemberOf.where({ $psitem.split('|')[0].trim().ToLower().StartsWith($g.ToLower()) })
+            }
+
+            if($users_in_DL.count -eq 0){
+                $users_in_DL = @{username= $null}
+            }
+
+            $comparison = Compare-Object $users_in_AD $users_in_DL -property username -PassThru
+
+            # Where left side matches AD, add that group to the DL record.
+            $added = $comparison | Where-Object SideIndicator -eq '<=' | foreach-Object {
+                $dlUser = $User | Where-Object Username -eq $psitem.Username
+                $dlUser.AddGroup($g)
+            }
+            # Users found only in the DL need to be removed.
+            $removed = $comparison | Where-Object SideIndicator -eq '=>' | foreach-Object {
+                $psitem.RemoveGroup($g)
+            }
+
+            [pscustomObject]@{
+                "Group"   = $g
+                "Added"   = $added.count
+                "Removed" = $removed.count
+                "Total" = $users_in_DL.count + ($added.count - $removed.count)
+            }
+            # TODO: If users in DL are Yes, check they're in AD, if no set to no
+            # TODO: Set usernames from AD to yes in DL.
+        }
     }
 }
