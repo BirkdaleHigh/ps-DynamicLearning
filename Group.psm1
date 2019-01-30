@@ -380,7 +380,7 @@ class DLUser {
         }
 
         # CSV Version 2 Header looks like this
-        if ( [bool]($PipedObject.PSobject.Properties.name -match 'Action *')) {
+        if ( [bool]($PipedObject.PSobject.Properties.name -match 'Action \*')) {
             $this.Action = $PipedObject.'Action *'
             $this.ID = $PipedObject.'User ID'
             $this.Type = $PipedObject.'Type *'
