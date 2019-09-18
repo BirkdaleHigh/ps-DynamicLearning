@@ -1,29 +1,38 @@
 # Dynamic Learning User Data
 This is a set of commands to make the headache of managing Dynamic Learning user accounts easier with regards to class memberships and student details
 
-As an example;
+New class methods example;
 
-```Powershell
-get-adgroup -SearchBase 'OU=Class Groups,OU=...,DC=EXAMPLE' -Filter * |
-    where name -match 'cs' |
-    where name -NotLike '11*' |
-    sort |
-    select name |
-    Update-DLUser -CSV 'N:\Dynamic Learning Downloaded Users.csv' |
-    convertto-csv -NoTypeInformation |
-    out-file 'N:\DLWithGroupsSetToUpload.csv'
-```
-
-New class-based example
 ``` powershell
-Import-csv 'N:\downloads\Accounts.csv' |
-    import-DLUser |
-    where {$_.memberof.count -eq 0} |
-    foreach {$_.delete().export()} |
-    Sort-Object username |
-    ConvertTo-Csv -NoTypeInformation |
-    out-file AccountsToDelete.csv -Force -Encoding utf8
+# Import the data sheet
+$allUsers = Import-csv 'N:\downloads\Accounts.csv' |
+    import-DLUser
+
+# Show the users and groups
+$allUsers | format-table username,memberOf
+
+# Empty the year 10 group of everyone
+$allUsers.removeGroup('Year 10')
+
+# Set the correct intake year to the new year 10
+($allUsers | where-object username -like 16*).addGroup('Year 10')
+    
+# Set members of 5 classes
+Update-DLGroup -user $allUsers -group '7HF_Cs','7JAC_Cs','7LH_Cs','7GMB_Cs','7CW_Cs'
+
+#Create a CSV of only the changed users
+$all | where-object action | sort-object username | Export-DLUser | convertto-csv -NoTypeInformation | Set-Content Account_to_update.csv
 ```
+
+# Workflow
+
+1. Import the users with groups from a DL CSV (this sets the available groups) from import-user
+   1. Once the users are imported, it will have an accurate list of group names to validate future commands against.
+2. Add new students from AD piping to new-userclass
+3. Combine the lists e.g. `$all = $importedUsers + $newUsers`
+4. Update the year groups removegroup/ filter and call addgroup
+5. update the class groups `Update-DLGroupMembershipFromAD`
+6. export modified users and upload.
 
 ## Add-DLGroup
 * Adds an empty group header to the csv
@@ -67,8 +76,8 @@ memberOf   : {7M5_Cs | Class Teacher, Year 7 | Class Teacher}
 `$user.export()` export does a number of things to prepare for creating a CSV to import back to Dynamic Learning
 
 1. Re-format all property names to the pattern as desired by their template
-1. Append properties of all the possible group memberships in order to negate previous values
-1. Update the group memberships to account for the membersOf property
+2. Append properties of all the possible group memberships in order to negate previous values
+3. Update the group memberships to account for the membersOf property
 
 ## Export-DLUser
 Simply a wrapper to the `.export()` method described above.
