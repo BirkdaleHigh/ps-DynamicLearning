@@ -249,7 +249,7 @@ class DLUser {
     }
 }
 
-function Import-User {
+function ConvertTo-User {
     <#
     .SYNOPSIS
         Convert CSV data into a useful object in to inspect and modify
@@ -263,17 +263,12 @@ function Import-User {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
         $User
     )
     process {
-        if ($PSBoundParameters.User) {
-            [DLUser]::new($User)
-        }
-        else {
-            Write-Warning "No input"
-        }
+        [DLUser]::new($User)
     }
 }
 

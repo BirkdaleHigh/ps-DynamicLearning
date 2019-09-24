@@ -5,10 +5,10 @@ New class methods example;
 
 ``` powershell
 # Import the data sheet
-$allUsers = Import-csv 'N:\downloads\Accounts.csv' |
-    import-DLUser
+$allUsers = Import-CSV 'N:\downloads\Accounts.csv' |
+    ConvertTo-DLUser
 
-# Show the users and groups
+# Show the users and groups to yourself
 $allUsers | format-table username,memberOf
 
 # Empty the year 10 group of everyone
@@ -49,7 +49,7 @@ Lists all groups found on the imported CSV
 Clear the users groups and re-assign "Yes" to their class and year group.
 
 # Using The Class
-## Import-DLUser
+## ConvertTo-DLUser
 Creates new account object with a more usable set of property names;
 
 ```
@@ -64,9 +64,9 @@ Middlename :
 Lastname   : Surname
 DOB        : 01/01/1970
 Sex        :
-UPN        : 000007
+UPN        : -blank-
 email      : Student@example.com
-memberOf   : {7M5_Cs | Class Teacher, Year 7 | Class Teacher}
+memberOf   : {7M5_Cs, Year 7}
 ```
 
 ### Methods
@@ -85,14 +85,4 @@ Simply a wrapper to the `.export()` method described above.
 # To Do List
 
 * `Update-User` should have test-user split off to remove compare-object output so it can be used to pipe further
-* Improve workflow to a solid import -> add -> edit -> export steps to upload to DL, currently we have separate but useful functions
-* Create `Export-DLUsers` that consumes `add-dlgroup`
-* Create `Import-DLUsers` to consume a CSV into something suitable for `Update-DLusers`
 * Finalize `New-DLUser` from reference.ps1 to be called in `update-DLUser` for adding new AD users to Dynamic learning to then have proper group assignment
-* `New-DLUser` needs to expose account password for distribution to students.
-* `Format-DLForHumans` should accept the same object about to be piped to `Export-DLUsers`
-
-# Class
-* DLuser class currently does not support group memberships
-
-Class is planned to be used by import-DLUser to create object from a data source that can be used by export-dluser which creates a CSV.
