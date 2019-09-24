@@ -330,6 +330,14 @@ function New-CSV{
     .EXAMPLE
         PS C:\> $modifiedUsers | Where Action | New-CSV
         Creates CSV files containing an ideal abount of users in the current folder
+        Directory: \Documents\new_users
+
+        Mode                LastWriteTime         Length Name
+        ----                -------------         ------ ----
+        -a----       24/09/2019     12:23          51554 15A-16M.24-09-2019.Import2.csv
+        -a----       24/09/2019     12:23          50216 16M-18A.24-09-2019.Import2.csv
+        -a----       24/09/2019     12:23          53328 18A-19M.24-09-2019.Import2.csv
+        -a----       24/09/2019     12:23          19898 19M-19Z.24-09-2019.Import2.csv
     .INPUTS
         DLUser
     .OUTPUTS

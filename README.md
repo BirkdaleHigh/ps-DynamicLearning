@@ -1,12 +1,23 @@
 # Dynamic Learning User Data
-This is a set of commands to make the headache of managing Dynamic Learning user accounts easier with regards to class memberships and student details
+This is a set of commands to make the headache of managing Hodder Education's "Dynamic Learning" platform user accounts easier with regards to class memberships and student details
+
+* Imports users with groups into easy-to-modify powershell objects (as a class) (`$list = Import-csv export_with_groups.csv | Convertto-DLUser`)
+* Create new users from scratch or AD account (from `get-aduser -properties emailaddress | New-DLUser`) with the username set to the email, avoiding password management.
+  * An example might be `$new = ...as above` and make a new full list to work with `$all = $new + $list`
+* Bulk remove group memberships on the user list (`$list.removeGroup('example')`)
+* Bulk add group membership on the whole list (`$list.addgroup('example)`) or a subest (`($list | where username -like 18*).addGroup('Example')`)
+* Automatically assign group memberships form matching AD Group Names (`Update-DLGroup -Users $List -group AD_Name1, AD_Name2`) see also: [School Groups](https://github.com/BirkdaleHigh/ps-SchoolGroups)
+* Bulk disable user access to DL (`($list | where xyz).Disable()`)
+* Create CSV Files ready to upload in their specific format and advice
+
+You can bulk delete users from DL (`($list | where xyz).Delete()`) but They have disabled this feature from the CSV import menu, so this can at least help you format a CSV to send them. It will warn you if users aren't disabled before they're deleted.
+
 
 New class methods example;
 
 ``` powershell
 # Import the data sheet
-$allUsers = Import-CSV 'N:\downloads\Accounts.csv' |
-    ConvertTo-DLUser
+$allUsers = Import-CSV 'N:\downloads\Accounts.csv' | ConvertTo-DLUser
 
 # Show the users and groups to yourself
 $allUsers | format-table username,memberOf
@@ -23,6 +34,8 @@ Update-DLGroup -user $allUsers -group '7HF_Cs','7JAC_Cs','7LH_Cs','7GMB_Cs','7CW
 #Create a CSV(s) of only the changed users
 $all | where-object action | New-DLCSV
 ```
+
+When making new users this won't bother adding data DL doesn't need to know therefore help to prevent data loss. This being Dob, UPN, gender.
 
 # Workflow
 
