@@ -20,8 +20,8 @@ $allUsers.removeGroup('Year 10')
 # Set members of 5 classes
 Update-DLGroup -user $allUsers -group '7HF_Cs','7JAC_Cs','7LH_Cs','7GMB_Cs','7CW_Cs'
 
-#Create a CSV of only the changed users
-$all | where-object action | sort-object username | Export-DLUser | convertto-csv -NoTypeInformation | Set-Content Account_to_update.csv
+#Create a CSV(s) of only the changed users
+$all | where-object action | New-DLCSV
 ```
 
 # Workflow
@@ -32,7 +32,9 @@ $all | where-object action | sort-object username | Export-DLUser | convertto-cs
 3. Combine the lists e.g. `$all = $importedUsers + $newUsers`
 4. Update the year groups removegroup/ filter and call addgroup
 5. update the class groups `Update-DLGroupMembershipFromAD`
-6. export modified users and upload.
+6. export modified users and upload each file.
+
+The Dynamic learning upload works most reliabled around a 250 user limit in the CSVs
 
 ## Add-DLGroup
 * Adds an empty group header to the csv

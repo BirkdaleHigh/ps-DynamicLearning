@@ -321,6 +321,51 @@ function Export-User {
     }
 }
 
+function New-CSV{
+    <#
+    .SYNOPSIS
+        Short description
+    .DESCRIPTION
+        Long description
+    .EXAMPLE
+        PS C:\> $modifiedUsers | Where Action | New-CSV
+        Creates CSV files containing an ideal abount of users in the current folder
+    .INPUTS
+        DLUser
+    .OUTPUTS
+        System.IO.FileInfo
+    #>
+    Param(
+        # Dynamic Learning imported users to be in the file
+        [Parameter(Mandatory)]
+        [DLUSer[]]$User
+
+        , # Filename title used in multiple files
+        [string]$Title = "UsersToImport"
+    )
+    $date = get-date -Format "dd-MM-yyyy"
+    [int]$length = 249
+    [int]$start = 0
+    [System.Collections.Generic.List[System.Object]]$chunk = [System.Collections.Generic.List[System.Object]]::new()
+    $sortedList = $User | Sort-Object -Property Username
+    do {
+        $chunk.add( $sortedList[$start..($start += $length)] )
+    } while ($chunk[-1].count -eq $length + 1)
+
+    if($chunk.count -gt 1){
+        Write-Warning "Split csv into separate uploads at 250 users upon advice from Support team."
+    }
+
+    foreach($file in $chunk){
+        $prefix = $file[0].username.remove(3)
+        $suffix = $file[-1].username.remove(3)
+        $name = "$prefix-$suffix.$date.$Title.csv"
+        $file.export() | ConvertTo-Csv -NoTypeInformation | Set-Content $name
+
+        Write-Output (Get-Item $name)
+    }
+}
+
 function Get-Group() {
     <#
     .SYNOPSIS
