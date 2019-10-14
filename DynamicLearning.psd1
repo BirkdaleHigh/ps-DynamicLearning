@@ -30,7 +30,7 @@ CompanyName = 'Birkdale High School'
 Copyright = '(c) 2019 Jack Bennett. All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'Programatic management of the users CSV exported from Hodder Educations Dynamic Learning Platform'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.0.0'

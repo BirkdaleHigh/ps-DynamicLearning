@@ -1,10 +1,14 @@
-﻿<#
+<#
 .SYNOPSIS
     File kept for referencing when writing future additions
 .DESCRIPTION
     Useful notes, ideas, attempts or one-lines used while creating the module.
 
 #>
+
+# quit right away as this file shouldn't be run
+return 
+
 
 function Get-GroupMember{
     Param(
